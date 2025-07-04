@@ -1,0 +1,7 @@
+[theme]
+base = "light"
+primaryColor = "#1e2f71"   # Deep navy blue for your buttons and highlights
+backgroundColor = "#f5f7fa"   # Soft light gray background
+secondaryBackgroundColor = "#ffffff"  # White for widgets
+textColor = "#222222"      # Dark gray for clear readability
+font = "sans serif"        # Clean modern font
