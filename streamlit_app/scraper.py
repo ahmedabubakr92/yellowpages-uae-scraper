@@ -1,5 +1,3 @@
-# api/scraper.py
-
 import os
 import time
 import pandas as pd
@@ -13,10 +11,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-# ✅ Create Chrome driver (uses webdriver-manager)
+# ✅ Create Chrome driver
 def create_driver():
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # ✅ keep headless for cloud deployments
+    options.add_argument("--headless")  # ✅ Keeps it headless for server use
+    options.add_argument("--no-sandbox")  # ✅ Safe for cloud containers
+    options.add_argument("--disable-dev-shm-usage")  # ✅ Avoid shared memory issues
     options.add_argument("--window-size=1920,1080")
 
     service = Service(ChromeDriverManager().install())
@@ -29,8 +29,6 @@ def perform_search(driver, keyword, city):
     base_url = "https://www.yellowpages-uae.com/"
     driver.get(base_url)
 
-    # 🔄 Always re-find until stable
-    keyword_input = None
     for _ in range(3):
         try:
             keyword_input = WebDriverWait(driver, 10).until(
@@ -43,7 +41,6 @@ def perform_search(driver, keyword, city):
             break
         except:
             time.sleep(1)
-            continue
 
     if city:
         city_input = driver.find_element(By.XPATH, '//input[@placeholder="Search..."]')
@@ -79,14 +76,14 @@ def perform_search(driver, keyword, city):
     )
 
 
-# ✅ Scrape all pages with deduplication
+# ✅ Scrape all pages
 def scrape_all_pages(driver, max_pages=None):
     all_results = []
     seen = set()
     page_num = 1
 
     while True:
-        print(f"\n🔎 Scraping page {page_num}...")
+        print(f"🔎 Scraping page {page_num}...")
         page_results = scrape_one_page(driver)
 
         for r in page_results:
@@ -209,7 +206,7 @@ def scrape_one_page(driver):
     return results
 
 
-# ✅ Run scraper and save Excel
+# ✅ Save to Excel in local data folder
 def run_scraper(keyword, city, max_pages=None):
     driver = create_driver()
     try:
@@ -232,7 +229,7 @@ def run_scraper(keyword, city, max_pages=None):
         driver.quit()
 
 
-# ✅ CLI runner
+# ✅ CLI Runner
 if __name__ == "__main__":
     keyword = input("Enter your search keyword: ").strip()
     city = input("Enter city (or leave blank for all UAE): ").strip()

@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from scraper import run_scraper  # ✅ Correct import for same-folder
+from scraper import run_scraper  # ✅ Local import for same-folder use
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -49,7 +49,7 @@ st.markdown("""
 st.markdown('<div class="title">YellowPages UAE Scraper</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Find & download verified business contacts easily.</div>', unsafe_allow_html=True)
 
-# ✅ --- POPULAR CATEGORIES ---
+# --- POPULAR CATEGORIES ---
 categories = [
     "Advertising", "Air Conditioning", "Aluminium", "Building Materials",
     "Cable and Wire", "Car Hire and Leasing", "Chemicals", "Clinics", "Digital Printing",
@@ -62,7 +62,7 @@ categories = [
 
 st.markdown("### 💡 Click a popular category:")
 
-# --- Store selected category in session ---
+# --- Store selected category in session state ---
 if "selected_category" not in st.session_state:
     st.session_state["selected_category"] = ""
 
@@ -80,10 +80,11 @@ keyword = st.text_input(
 )
 
 # --- CITY SELECT ---
-emirates = ["", "Abu Dhabi", "Dubai", "Sharjah", "Ajman", "Umm Al Quwain", "Ras Al Khaimah", "Fujairah"]
+emirates = ["", "Abu Dhabi", "Dubai", "Sharjah", "Ajman",
+            "Umm Al Quwain", "Ras Al Khaimah", "Fujairah"]
 city = st.selectbox("🏙️ Select an Emirate (optional)", emirates)
 
-# ✅ --- MAX PAGES SELECT ---
+# --- MAX PAGES SELECT ---
 st.markdown("### 📄 How many pages to scrape?")
 page_options = ["All Pages"] + [str(i) for i in range(1, 11)]
 selected_page = st.selectbox("Select pages to scrape", page_options)
@@ -97,6 +98,7 @@ if st.button("🚀 Start Scraping"):
         st.info("🔎 Scraping in progress... Please wait...")
 
         try:
+            # ✅ Run your local scraper!
             file_path = run_scraper(
                 keyword.strip(),
                 city if city else "",
