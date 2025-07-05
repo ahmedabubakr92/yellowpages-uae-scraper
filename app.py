@@ -1,5 +1,4 @@
 import streamlit as st
-import os
 import requests
 
 # --- PAGE CONFIG ---
@@ -60,16 +59,19 @@ categories = [
     "Shelving and Storage", "Steel Merchants", "Steel Fabricators", "Valves"
 ]
 
-st.markdown("### 💡 Click a popular category:")
+st.markdown("### 💡 Pick a popular category (optional):")
 
-# --- Store selected category in session state ---
 if "selected_category" not in st.session_state:
     st.session_state["selected_category"] = ""
 
-cols = st.columns(3)
-for idx, category in enumerate(categories):
-    if cols[idx % 3].button(category):
-        st.session_state["selected_category"] = category
+selected_category = st.selectbox(
+    "Choose from popular categories:",
+    [""] + categories,
+    index=categories.index(st.session_state["selected_category"]) + 1 if st.session_state["selected_category"] else 0
+)
+
+if selected_category:
+    st.session_state["selected_category"] = selected_category
 
 # --- SEARCH INPUT ---
 st.markdown("### 🔍 What are you searching for?")
@@ -90,7 +92,7 @@ page_options = ["All Pages"] + [str(i) for i in range(1, 11)]
 selected_page = st.selectbox("Select pages to scrape", page_options)
 max_pages = None if selected_page == "All Pages" else int(selected_page)
 
-# ✅ --- API Endpoint ---
+# ✅ API Endpoint
 API_URL = "https://yellowpages-uae-scraper.onrender.com/scrape"
 
 # --- SCRAPE BUTTON ---
@@ -101,20 +103,14 @@ if st.button("🚀 Start Scraping"):
         st.info("🔎 Scraping in progress... Please wait...")
 
         try:
-            # ✅ Build payload for the API
             payload = {
                 "keyword": keyword.strip(),
                 "city": city if city else "",
                 "max_pages": max_pages
             }
 
-            headers = {
-                # "accept": "application/json",
-                # "X-API-Key": st.secrets["API_KEY"],  # ✅ Loaded from .streamlit/secrets.toml
-                # "Content-Type": "application/json"
-            }
+            headers = {}
 
-            # ✅ Call your live Render API!
             response = requests.post(API_URL, json=payload, headers=headers)
             response.raise_for_status()
 
@@ -124,7 +120,7 @@ if st.button("🚀 Start Scraping"):
             if file_path:
                 st.success("✅ Done! Your data is ready.")
                 st.write("📄 File generated at:", file_path)
-                st.info("👉 Add a /download endpoint if you want to actually download from your Render API.")
+                st.info("👉 You can add a /download endpoint if you want to provide direct file downloads later.")
             else:
                 st.error("⚠️ No file path returned by the API.")
 

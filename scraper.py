@@ -14,12 +14,12 @@ from webdriver_manager.chrome import ChromeDriverManager
 # ✅ Create Chrome driver safely for cloud containers
 def create_driver():
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # Headless for servers
-    options.add_argument("--no-sandbox")  # Safe for containerized build
-    options.add_argument("--disable-dev-shm-usage")  # Avoid shared memory problems
+    # options.add_argument("--headless")  # Headless for servers
+    # options.add_argument("--no-sandbox")  # Safe for containerized build
+    # options.add_argument("--disable-dev-shm-usage")  # Avoid shared memory problems
+    # options.add_argument("--disable-gpu")
+    # options.add_argument("--disable-software-rasterizer")
     options.add_argument("--window-size=1920,1080")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--disable-software-rasterizer")
     options.add_argument("--disable-blink-features=AutomationControlled")
 
     service = Service(ChromeDriverManager().install())
