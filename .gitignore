@@ -5,3 +5,4 @@ __pycache__/
 data/
 .env
 venv
+.streamlit/secrets.toml
