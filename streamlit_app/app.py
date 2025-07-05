@@ -91,7 +91,7 @@ selected_page = st.selectbox("Select pages to scrape", page_options)
 max_pages = None if selected_page == "All Pages" else int(selected_page)
 
 # ✅ --- API Endpoint ---
-API_URL = "https://YOUR-RENDER-API-URL/scrape"
+API_URL = "https://yellowpages-uae-scraper.onrender.com/scrape"
 
 # --- SCRAPE BUTTON ---
 if st.button("🚀 Start Scraping"):
@@ -101,7 +101,7 @@ if st.button("🚀 Start Scraping"):
         st.info("🔎 Scraping in progress... Please wait...")
 
         try:
-            # ✅ Payload for the API
+            # ✅ Build payload for the API
             payload = {
                 "keyword": keyword.strip(),
                 "city": city if city else "",
@@ -109,10 +109,12 @@ if st.button("🚀 Start Scraping"):
             }
 
             headers = {
-                "X-API-Key": st.secrets["API_KEY"]
+                "accept": "application/json",
+                "X-API-Key": st.secrets["API_KEY"],  # ✅ Loaded from .streamlit/secrets.toml
+                "Content-Type": "application/json"
             }
 
-            # ✅ Call your Render API!
+            # ✅ Call your live Render API!
             response = requests.post(API_URL, json=payload, headers=headers)
             response.raise_for_status()
 
@@ -121,10 +123,12 @@ if st.button("🚀 Start Scraping"):
 
             if file_path:
                 st.success("✅ Done! Your data is ready.")
-                st.write("📄 File saved at:", file_path)
-                # 👉 If you later host files on S3 / Render static: add download link here
+                st.write("📄 File generated at:", file_path)
+                st.info("👉 Add a /download endpoint if you want to actually download from your Render API.")
             else:
-                st.error("⚠️ No file path returned.")
+                st.error("⚠️ No file path returned by the API.")
 
+        except requests.exceptions.RequestException as e:
+            st.error(f"❌ API request failed: {e}")
         except Exception as e:
             st.error(f"❌ Unexpected error: {e}")

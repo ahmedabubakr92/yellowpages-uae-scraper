@@ -11,15 +11,16 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-# ✅ Create Chrome driver for headless server use
+# ✅ Create Chrome driver safely for cloud containers
 def create_driver():
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # Run in headless mode
-    options.add_argument("--no-sandbox")  # Safe for containers
-    options.add_argument("--disable-dev-shm-usage")  # Prevent /dev/shm issues
+    options.add_argument("--headless")  # Headless for servers
+    options.add_argument("--no-sandbox")  # Safe for containerized build
+    options.add_argument("--disable-dev-shm-usage")  # Avoid shared memory problems
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--disable-blink-features=AutomationControlled")
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
@@ -31,8 +32,7 @@ def perform_search(driver, keyword, city):
     base_url = "https://www.yellowpages-uae.com/"
     driver.get(base_url)
 
-    # Robust wait-retry to handle slow pages
-    for _ in range(3):
+    for _ in range(3):  # Retry loop for stability
         try:
             keyword_input = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located(
@@ -79,7 +79,7 @@ def perform_search(driver, keyword, city):
     )
 
 
-# ✅ Scrape all pages
+# ✅ Scrape all pages with deduplication
 def scrape_all_pages(driver, max_pages=None):
     all_results = []
     seen = set()
@@ -111,7 +111,7 @@ def scrape_all_pages(driver, max_pages=None):
     return all_results
 
 
-# ✅ Scrape one page
+# ✅ Scrape listings on one page
 def scrape_one_page(driver):
     listings = driver.find_elements(By.XPATH, '//div[contains(@class, "min-h-[200px]") and contains(@class, "lg:flex-row")]')
     print(f"✅ Found {len(listings)} listings on this page.")
@@ -232,7 +232,7 @@ def run_scraper(keyword, city, max_pages=None):
         driver.quit()
 
 
-# ✅ CLI runner
+# ✅ CLI runner for local use
 if __name__ == "__main__":
     keyword = input("Enter your search keyword: ").strip()
     city = input("Enter city (or leave blank for all UAE): ").strip()
