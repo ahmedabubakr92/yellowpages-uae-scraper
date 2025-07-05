@@ -109,9 +109,9 @@ if st.button("🚀 Start Scraping"):
             }
 
             headers = {
-                "accept": "application/json",
-                "X-API-Key": st.secrets["API_KEY"],  # ✅ Loaded from .streamlit/secrets.toml
-                "Content-Type": "application/json"
+                # "accept": "application/json",
+                # "X-API-Key": st.secrets["API_KEY"],  # ✅ Loaded from .streamlit/secrets.toml
+                # "Content-Type": "application/json"
             }
 
             # ✅ Call your live Render API!
