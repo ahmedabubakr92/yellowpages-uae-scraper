@@ -1,46 +1,52 @@
 import streamlit as st
-import requests
+import os
+from scraper import run_scraper  # ✅ Local scraper
 
 # --- PAGE CONFIG ---
 st.set_page_config(
     page_title="YellowPages UAE Scraper",
     page_icon="📄",
-    layout="centered"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
-# --- HIDE Streamlit default elements ---
+# --- FORCE LIGHT MODE + CUSTOM CSS ---
 st.markdown("""
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    </style>
-""", unsafe_allow_html=True)
-
-# --- CUSTOM CSS ---
-st.markdown("""
-    <style>
-    body {
-        background-color: #f5f7fa;
+    html, body {
+        background-color: #f9fafb !important;
+        color: #1e2f71 !important;
+        font-family: 'Segoe UI', 'Helvetica Neue', sans-serif !important;
     }
     .title {
-        font-size: 2.5rem;
+        font-size: 2.8rem;
         font-weight: 700;
-        color: #1e2f71;
+        color: #1e2f71 !important;
         margin-bottom: 5px;
     }
     .subtitle {
-        font-size: 1rem;
-        color: #555;
+        font-size: 1.1rem;
+        color: #555 !important;
         margin-bottom: 25px;
     }
     .stButton>button {
-        background-color: #1e2f71;
-        color: white;
-        border-radius: 5px;
-        height: 3em;
-        font-weight: 600;
+        background-color: #1e2f71 !important;
+        color: #ffffff !important;
+        border-radius: 6px !important;
+        height: 3em !important;
+        font-weight: 600 !important;
+        padding: 0 1.5em !important;
     }
+    .stButton>button:hover {
+        background-color: #16235a !important;
+    }
+    .stDownloadButton>button {
+        background-color: #28a745 !important;
+        color: #ffffff !important;
+    }
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -92,39 +98,31 @@ page_options = ["All Pages"] + [str(i) for i in range(1, 11)]
 selected_page = st.selectbox("Select pages to scrape", page_options)
 max_pages = None if selected_page == "All Pages" else int(selected_page)
 
-# ✅ API Endpoint
-API_URL = "https://yellowpages-uae-scraper.onrender.com/scrape"
-
 # --- SCRAPE BUTTON ---
 if st.button("🚀 Start Scraping"):
     if not keyword.strip():
         st.warning("⚠️ Please enter or select a keyword.")
     else:
-        st.info("🔎 Scraping in progress... Please wait...")
+        with st.spinner("🔎 Scraping in progress... Please wait!"):
+            try:
+                file_path = run_scraper(
+                    keyword.strip(),
+                    city if city else "",
+                    max_pages
+                )
 
-        try:
-            payload = {
-                "keyword": keyword.strip(),
-                "city": city if city else "",
-                "max_pages": max_pages
-            }
+                if file_path and os.path.exists(file_path):
+                    st.success("✅ Done! Your data is ready.")
+                    st.write(f"📄 Saved file: `{file_path}`")
+                    with open(file_path, "rb") as f:
+                        st.download_button(
+                            label="📥 Download Excel",
+                            data=f,
+                            file_name=os.path.basename(file_path),
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+                else:
+                    st.error("⚠️ Could not find the generated file.")
 
-            headers = {}
-
-            response = requests.post(API_URL, json=payload, headers=headers)
-            response.raise_for_status()
-
-            data = response.json()
-            file_path = data.get("file_path")
-
-            if file_path:
-                st.success("✅ Done! Your data is ready.")
-                st.write("📄 File generated at:", file_path)
-                st.info("👉 You can add a /download endpoint if you want to provide direct file downloads later.")
-            else:
-                st.error("⚠️ No file path returned by the API.")
-
-        except requests.exceptions.RequestException as e:
-            st.error(f"❌ API request failed: {e}")
-        except Exception as e:
-            st.error(f"❌ Unexpected error: {e}")
+            except Exception as e:
+                st.error(f"❌ Unexpected error: {e}")
