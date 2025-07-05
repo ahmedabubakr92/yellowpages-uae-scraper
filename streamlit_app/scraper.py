@@ -11,24 +11,27 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-# ✅ Create Chrome driver
+# ✅ Create Chrome driver for headless server use
 def create_driver():
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # ✅ Keeps it headless for server use
-    options.add_argument("--no-sandbox")  # ✅ Safe for cloud containers
-    options.add_argument("--disable-dev-shm-usage")  # ✅ Avoid shared memory issues
+    options.add_argument("--headless")  # Run in headless mode
+    options.add_argument("--no-sandbox")  # Safe for containers
+    options.add_argument("--disable-dev-shm-usage")  # Prevent /dev/shm issues
     options.add_argument("--window-size=1920,1080")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-software-rasterizer")
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
     return driver
 
 
-# ✅ Perform search
+# ✅ Perform YellowPages search
 def perform_search(driver, keyword, city):
     base_url = "https://www.yellowpages-uae.com/"
     driver.get(base_url)
 
+    # Robust wait-retry to handle slow pages
     for _ in range(3):
         try:
             keyword_input = WebDriverWait(driver, 10).until(
@@ -206,7 +209,7 @@ def scrape_one_page(driver):
     return results
 
 
-# ✅ Save to Excel in local data folder
+# ✅ Run & save to Excel
 def run_scraper(keyword, city, max_pages=None):
     driver = create_driver()
     try:
@@ -229,7 +232,7 @@ def run_scraper(keyword, city, max_pages=None):
         driver.quit()
 
 
-# ✅ CLI Runner
+# ✅ CLI runner
 if __name__ == "__main__":
     keyword = input("Enter your search keyword: ").strip()
     city = input("Enter city (or leave blank for all UAE): ").strip()

@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from scraper import run_scraper  # ✅ Local import for same-folder use
+import requests
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -90,6 +90,9 @@ page_options = ["All Pages"] + [str(i) for i in range(1, 11)]
 selected_page = st.selectbox("Select pages to scrape", page_options)
 max_pages = None if selected_page == "All Pages" else int(selected_page)
 
+# ✅ --- API Endpoint ---
+API_URL = "https://YOUR-RENDER-API-URL/scrape"
+
 # --- SCRAPE BUTTON ---
 if st.button("🚀 Start Scraping"):
     if not keyword.strip():
@@ -98,23 +101,30 @@ if st.button("🚀 Start Scraping"):
         st.info("🔎 Scraping in progress... Please wait...")
 
         try:
-            # ✅ Run your local scraper!
-            file_path = run_scraper(
-                keyword.strip(),
-                city if city else "",
-                max_pages
-            )
+            # ✅ Payload for the API
+            payload = {
+                "keyword": keyword.strip(),
+                "city": city if city else "",
+                "max_pages": max_pages
+            }
 
-            if file_path and os.path.exists(file_path):
+            headers = {
+                "X-API-Key": st.secrets["API_KEY"]
+            }
+
+            # ✅ Call your Render API!
+            response = requests.post(API_URL, json=payload, headers=headers)
+            response.raise_for_status()
+
+            data = response.json()
+            file_path = data.get("file_path")
+
+            if file_path:
                 st.success("✅ Done! Your data is ready.")
-                with open(file_path, "rb") as f:
-                    st.download_button(
-                        label="📥 Download Excel",
-                        data=f,
-                        file_name=os.path.basename(file_path),
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
+                st.write("📄 File saved at:", file_path)
+                # 👉 If you later host files on S3 / Render static: add download link here
             else:
-                st.error("⚠️ Could not find the generated file.")
+                st.error("⚠️ No file path returned.")
+
         except Exception as e:
             st.error(f"❌ Unexpected error: {e}")
