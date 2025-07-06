@@ -10,29 +10,22 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from webdriver_manager.chrome import ChromeDriverManager
 
-
-# ✅ Create Chrome driver safely for cloud containers
+# ✅ Create Chrome driver safely
 def create_driver():
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # Headless for servers
-    # options.add_argument("--no-sandbox")  # Safe for containerized build
-    # options.add_argument("--disable-dev-shm-usage")  # Avoid shared memory problems
-    # options.add_argument("--disable-gpu")
-    # options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--headless")  # Headless for servers or local
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--disable-blink-features=AutomationControlled")
-
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
     return driver
-
 
 # ✅ Perform YellowPages search
 def perform_search(driver, keyword, city):
     base_url = "https://www.yellowpages-uae.com/"
     driver.get(base_url)
 
-    for _ in range(3):  # Retry loop for stability
+    for _ in range(3):
         try:
             keyword_input = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located(
@@ -78,8 +71,7 @@ def perform_search(driver, keyword, city):
         )
     )
 
-
-# ✅ Scrape all pages with deduplication
+# ✅ Scrape all pages safely
 def scrape_all_pages(driver, max_pages=None):
     all_results = []
     seen = set()
@@ -101,21 +93,28 @@ def scrape_all_pages(driver, max_pages=None):
 
         try:
             next_btn = driver.find_element(By.XPATH, '//button[@name="page" and text()="Next"]')
+            # ✅ Check if Next is disabled
+            if not next_btn.is_enabled():
+                print("✅ Next button is disabled. Stopping.")
+                break
+            btn_class = next_btn.get_attribute("class") or ""
+            if "disabled" in btn_class.lower():
+                print("✅ Next button shows disabled in class. Stopping.")
+                break
+
             driver.execute_script("arguments[0].click();", next_btn)
             time.sleep(2)
             page_num += 1
         except:
-            print("✅ No more pages.")
+            print("✅ No more pages found. Stopping.")
             break
 
     return all_results
 
-
-# ✅ Scrape listings on one page
+# ✅ Scrape one page listings
 def scrape_one_page(driver):
     listings = driver.find_elements(By.XPATH, '//div[contains(@class, "min-h-[200px]") and contains(@class, "lg:flex-row")]')
     print(f"✅ Found {len(listings)} listings on this page.")
-
     results = []
 
     for listing in listings:
@@ -208,7 +207,6 @@ def scrape_one_page(driver):
 
     return results
 
-
 # ✅ Run & save to Excel
 def run_scraper(keyword, city, max_pages=None):
     driver = create_driver()
@@ -221,7 +219,11 @@ def run_scraper(keyword, city, max_pages=None):
         output_dir = os.path.join(base_dir, "data")
         os.makedirs(output_dir, exist_ok=True)
 
-        file_name = f"yellowpages_{keyword.replace(' ', '_')}.xlsx"
+        # ✅ Clean filename: keyword + city if provided
+        keyword_part = keyword.replace(' ', '_')
+        city_part = f"_{city.replace(' ', '_')}" if city else ""
+        file_name = f"yellowpages_{keyword_part}{city_part}.xlsx"
+
         file_path = os.path.join(output_dir, file_name)
         df.to_excel(file_path, index=False)
 
@@ -231,8 +233,7 @@ def run_scraper(keyword, city, max_pages=None):
     finally:
         driver.quit()
 
-
-# ✅ CLI runner for local use
+# ✅ CLI runner
 if __name__ == "__main__":
     keyword = input("Enter your search keyword: ").strip()
     city = input("Enter city (or leave blank for all UAE): ").strip()
